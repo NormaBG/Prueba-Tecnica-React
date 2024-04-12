@@ -13,6 +13,49 @@ function App() {
   const [vehiculos, setVehiculos] = useState([]);
   const [naves, setNaves] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [personajesCopia, setPersonajesCopia] = useState([]);
+  const [url, setUrl] = useState('https://swapi.dev/api/people/1');
+  const paginas = Math.ceil(personajes.length / 10);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginaSiguiente, setPaginaSiguiente] = useState(null);
+  const [paginaAnterior, setPaginaAnterior] = useState(null);
+
+  /*
+  //funcion para ir a la pagina siguiente
+  const SiguientePagina = () => {
+    const ultimaPagina = paginas;
+    const nuevaPagina = paginaActual + 1;
+    if(nuevaPagina > ultimaPagina) return;
+    setPaginaActual(nuevaPagina);
+  }
+
+  //cargar pagina actuaal
+
+  const cargarPaginaActual = () => {
+    const primerPersonaje = 1;
+    const ultimoPersonaje = paginaActual * 10;
+    setPaginaSiguiente(ultimoPersonaje);
+    setPaginaAnterior(primerPersonaje);
+  }
+
+  //pagina anterior
+
+  const cargarPaginaAnterior = () => {
+    const primerPersonaje = 1;
+    const nuevaPagina = paginaActual - 1;
+    if(nuevaPagina < primerPersonaje) return;
+    setPaginaActual(nuevaPagina);
+  }
+
+  //cargar datos cuando cambie la pagina
+  useEffect(() => {
+    cargarPaginaActual();
+  
+  })
+*/
+
+  //-------------------------------------------------------------
 
   //peticion a la api personajes
  useEffect(()=>{
@@ -21,6 +64,7 @@ function App() {
   .then((p) => {
     console.log(p);
     setPersonajes(p.results)
+    setPersonajesCopia(p.results)
   })
   .catch(err => alert(err))
 },[])
@@ -60,6 +104,20 @@ function App() {
     .catch(err => alert(err))
   }, [])
 
+  //petiion a la api de naves
+
+  useEffect(() =>{
+    const naves = fetch('https://swapi.dev/api/starships/')
+    .then (res => res.json())
+    .then ((n) => {
+      console.log("naves", n);
+      setNaves(n.results)
+    })
+    .catch(err => alert(err))
+  }, [])
+
+  //-------------------------------------------------------------
+
   //ooobtener nombre del planeta
   const getNombrePlaneta = (url) => {
     const planeta = planetas.find(planeta => planeta.url === url);
@@ -67,29 +125,66 @@ function App() {
   }
 
   //obtener nombre de las peliculas
-  const getNombrePeliculas = (url) => {
-    const pelicula = peliculas.find(peliculas => peliculas.url === url);
-    return pelicula ? pelicula.title : '';
+  const getNombrePeliculas = () => {
+    if(!personajeSeleccionado.films) return '';
+    const NombresPeliculas = personajeSeleccionado.films.map((url) =>{
+      const pelicula = peliculas.find(peliculas => peliculas.url === url);
+      return pelicula ? pelicula.title : "";
+    })
+    return NombresPeliculas.join(', ');
   }
 
   const handlePersonajeClick = (personaje) => {
+
     console.log("Personaje 1:",personaje);
     setPersonajeSeleccionado(personaje);
     setModalVisible(true);
+
+
+    //promise para las naves
+
+    Promise.all(personaje.starships.map((url) => fetch(url).then(res => res.json())))
+    .then((naves) => {
+      return naves.map((nave) => nave.name)
+    }).then((nombresNaves) => {
+      console.log("Naves2:", nombresNaves);
+      setNaves(nombresNaves);
+    })
+
+    //promise para los vehiculos
+
+    Promise.all(personaje.vehicles.map((url) => fetch(url).then(res => res.json())))
+    .then((vehiculos) => {
+      return vehiculos.map((vehiculo) => vehiculo.name)
+    }).then((nombresVeh) => {
+      console.log("Naves2:", nombresVeh);
+      setVehiculos(nombresVeh);
+    })
+
   };
+  //-------------------------------------------------------------
 
   //funcion para cerrar el modal
 
   const cerrarModal = () => {
     setModalVisible(false);
   }
-  
+
+  //filtrar personajes
+  const filtrarPersonajes = (e) => {
+      const personajesFiltrados = personajesCopia.filter((personaje) => {
+        return personaje.name.toLowerCase().includes(e.target.value.toLowerCase());
+      })
+      setPersonajes(personajesFiltrados);
+  }
+  //________________________________________________________________
   return (
     <main>
+      <input type="text" onChange={(e) => filtrarPersonajes(e)} placeholder='Busqueda de Personajes'></input>
       <table>
         <thead>
           <tr>
-          <th>Nombre</th>
+            <th>Nombre</th>
             <th>Altura</th>
             <th>Peso</th>
             <th>Color de cabello</th>
@@ -121,14 +216,18 @@ function App() {
         <div className="modal">
           <div className = "modal-content">
             <span className="cerrar" onClick={cerrarModal}>&times;</span>
-            
-              <p>Peliculas: {getNombrePeliculas(personajeSeleccionado.films)}</p>
-              <p>Vehiculos: {personajeSeleccionado.vehicles}</p>
-              <p>Naves: {personajeSeleccionado.starships}</p>
+              <p>Peliculas: {getNombrePeliculas()}</p>
+              <p>Vehiculos: {vehiculos.join(",")}</p>
+              <p>Naves: {naves.join(",")}</p>
             <button onClick={cerrarModal}>Cerrar</button>
           </div>
         </div>
       )}
+
+      <div className = "paginacion">
+      </div>
+
+
     </main>
   )
 }
