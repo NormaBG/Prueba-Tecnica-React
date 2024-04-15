@@ -17,15 +17,12 @@ function App() {
   const ElementosApi = 82;
   const paginas = Math.ceil(ElementosApi/10)
 
-
-
   //-------------------------------------------------------------
   const handleClickPagina = (pagina) => {
-
     setPaginaSeleccionada(pagina)
     setUrl("https://swapi.dev/api/people/?page="+pagina)
-}
-
+  }
+  
   //peticion a la api personajes
  useEffect(()=>{
   const personaje = fetch(url)
@@ -36,25 +33,45 @@ function App() {
     setPersonajesCopia(p.results)
   })
   .catch(err => alert(err))
-  const planetas = fetch("https://swapi.dev/api/planets/")
-  .then (res => res.json())
-  .then((p) => {
-    console.log(p);
-    setPlanetas(p.results)
-  })
-  .catch(err => alert(err))
 },[url])
+//-------------------------------------------------------------
 
-//peticion a la api planetas
+//obtencion de planetas
+
   useEffect(()=>{
-    const planeta = fetch('https://swapi.dev/api/planets/')
-    .then (res => res.json())
-    .then((p) => {
-      console.log(p);
-      setPlanetas(p.results)
-    })
-    .catch(err => alert(err))
-  },[url])
+    const obtenerPlanetas = async () => {
+      try {
+  
+          const response = await fetch('https://swapi.dev/api/planets/');
+          let datosPlaneta = await response.json()
+          let planetas = []
+          while (datosPlaneta){
+              let planetasArray = []
+              for(const planeta of datosPlaneta.results){
+  
+                  const newPlaneta = {
+                    name: planeta.name,
+                      url:planeta.url,
+                  }
+                  planetasArray.push(newPlaneta)
+              }
+              planetas.push(...planetasArray)
+              if(datosPlaneta.next === null){
+                  break
+              }
+              const responseTemp = await fetch(datosPlaneta.next)
+              datosPlaneta = await responseTemp.json()
+  
+          }
+          console.log("planetas",planetas)
+          setPlanetas(planetas)
+      } catch (error) {
+          console.log("errror ",error)
+      }
+  }
+  obtenerPlanetas()
+},[])
+
 
   //peticion a la api de  peliculas
 
@@ -94,7 +111,7 @@ function App() {
 
   //-------------------------------------------------------------
 
-  //ooobtener nombre del planeta
+  //obtener nombre del planeta
   const getNombrePlaneta = (url) => {
     const planeta = planetas.find(planeta => planeta.url === url);
     return planeta ? planeta.name : 'Desconocido';
