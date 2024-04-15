@@ -49,3 +49,21 @@ tr:nth-child(even){
     color: #e71111;
   }
   
+  /*Paginacion*/
+
+  .paginado{
+    display:flex;
+    list-style-type: none;
+    margin-left: 0px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .paginado li{
+    margin: 0 5px;
+    cursor: pointer;
+  }
+
+  .paginado li strong{
+    font-weight: bold;
+  }

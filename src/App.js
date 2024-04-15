@@ -1,7 +1,4 @@
 import { useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Modal from '@mui/material/Modal';
 import './App.css';
 
 function App() {
@@ -15,51 +12,23 @@ function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [personajesCopia, setPersonajesCopia] = useState([]);
-  const [url, setUrl] = useState('https://swapi.dev/api/people/1');
-  const paginas = Math.ceil(personajes.length / 10);
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [paginaSiguiente, setPaginaSiguiente] = useState(null);
-  const [paginaAnterior, setPaginaAnterior] = useState(null);
+  const [url,setUrl] = useState("https://swapi.dev/api/people/?page=1")
+  const [paginaSeleccionada,setPaginaSeleccionada] = useState(1)
+  const ElementosApi = 82;
+  const paginas = Math.ceil(ElementosApi/10)
 
-  /*
-  //funcion para ir a la pagina siguiente
-  const SiguientePagina = () => {
-    const ultimaPagina = paginas;
-    const nuevaPagina = paginaActual + 1;
-    if(nuevaPagina > ultimaPagina) return;
-    setPaginaActual(nuevaPagina);
-  }
 
-  //cargar pagina actuaal
-
-  const cargarPaginaActual = () => {
-    const primerPersonaje = 1;
-    const ultimoPersonaje = paginaActual * 10;
-    setPaginaSiguiente(ultimoPersonaje);
-    setPaginaAnterior(primerPersonaje);
-  }
-
-  //pagina anterior
-
-  const cargarPaginaAnterior = () => {
-    const primerPersonaje = 1;
-    const nuevaPagina = paginaActual - 1;
-    if(nuevaPagina < primerPersonaje) return;
-    setPaginaActual(nuevaPagina);
-  }
-
-  //cargar datos cuando cambie la pagina
-  useEffect(() => {
-    cargarPaginaActual();
-  
-  })
-*/
 
   //-------------------------------------------------------------
+  const handleClickPagina = (pagina) => {
+
+    setPaginaSeleccionada(pagina)
+    setUrl("https://swapi.dev/api/people/?page="+pagina)
+}
 
   //peticion a la api personajes
  useEffect(()=>{
-  const personaje = fetch('https://swapi.dev/api/people/')
+  const personaje = fetch(url)
   .then (res => res.json())
   .then((p) => {
     console.log(p);
@@ -67,7 +36,14 @@ function App() {
     setPersonajesCopia(p.results)
   })
   .catch(err => alert(err))
-},[])
+  const planetas = fetch("https://swapi.dev/api/planets/")
+  .then (res => res.json())
+  .then((p) => {
+    console.log(p);
+    setPlanetas(p.results)
+  })
+  .catch(err => alert(err))
+},[url])
 
 //peticion a la api planetas
   useEffect(()=>{
@@ -78,7 +54,7 @@ function App() {
       setPlanetas(p.results)
     })
     .catch(err => alert(err))
-  },[])
+  },[url])
 
   //peticion a la api de  peliculas
 
@@ -121,7 +97,7 @@ function App() {
   //ooobtener nombre del planeta
   const getNombrePlaneta = (url) => {
     const planeta = planetas.find(planeta => planeta.url === url);
-    return planeta ? planeta.name : '';
+    return planeta ? planeta.name : 'Desconocido';
   }
 
   //obtener nombre de las peliculas
@@ -205,7 +181,7 @@ function App() {
               <td>{personaje.skin_color}</td>
               <td>{personaje.eye_color}</td>
               <td>{personaje.birth_year}</td>
-              <td>{personaje.gender}</td>              
+              <td>{personaje.gender}</td>        
               <td>{getNombrePlaneta(personaje.homeworld)}</td>
             </tr>
           ))}
@@ -224,10 +200,16 @@ function App() {
         </div>
       )}
 
-      <div className = "paginacion">
-      </div>
-
-
+      <ul className="paginado">
+        {
+          Array.from(Array(paginas), (e, i) => {
+            return(
+              <li onClick={()=> handleClickPagina(i+1)}  key={i+1}>
+                {paginaSeleccionada === i+1 ? (<strong>{i+1}</strong>) : i+1 }
+              </li>
+            )
+        })} 
+      </ul>
     </main>
   )
 }
